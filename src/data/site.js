@@ -28,7 +28,6 @@ export const newsletter = {
   description:
     "A weekly email about what I'm building, what I'm learning, and ideas worth sharing.",
   buttonLabel: 'COUNT ME IN',
-  // Shown after a valid submission. Keep it honest: no service is connected yet.
-  demoSuccessMessage:
-    'Thanks! The signup form is ready to connect to the newsletter service.',
+  // Shown after the email is saved (see worker/index.js).
+  successMessage: "You're subscribed! Thanks for joining — see you in your inbox.",
 };

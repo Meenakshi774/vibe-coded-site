@@ -22,7 +22,8 @@ All bio, project, stat, timeline and social content is **placeholder**. Never re
 npm install       # install dependencies (only `astro`)
 npm run dev       # dev server at http://localhost:4321
 npm run build     # static build into ./dist (must pass before any commit)
-npm run preview   # serve ./dist locally
+npm run preview   # serve ./dist locally (no signup API)
+npm run preview:cloudflare  # build + run site and Worker/D1 locally at :8787
 ```
 
 - Node.js **22.22+** is required (Astro 7). `.node-version` pins Node 22 for the Cloudflare build.
@@ -37,9 +38,9 @@ npm run preview   # serve ./dist locally
 Do **not** add any of the following unless the owner explicitly asks:
 
 - React, Next.js, Tailwind or another UI framework
-- A CMS, database, auth, custom backend or server functions
+- A CMS, auth, or any server code beyond the small signup Worker
 - Analytics, search, a blog system, or an admin dashboard
-- Newsletter API integration or anything that sends or stores email addresses
+- Third-party newsletter integrations, or storing anything about subscribers beyond email + signup time
 - Animation libraries, extra npm packages, or environment variables
 
 Prefer static rendering. Keep client-side JavaScript to the two existing small scripts.
@@ -51,7 +52,8 @@ AGENTS.md                 ← this file
 README.md                 ← owner-facing setup, content editing and deployment guide
 astro.config.mjs          ← empty config; add `site: 'https://…'` once a domain exists
 .node-version             ← "22" (read by Cloudflare's build)
-wrangler.jsonc            ← Cloudflare Worker config: name + assets dir (./dist)
+wrangler.jsonc            ← Cloudflare Worker config: name, assets (./dist), /api/* → worker, D1 binding DB
+worker/index.js           ← Worker: POST /api/subscribe saves emails to D1; everything else → static assets
 public/
   favicon.svg             ← black square, white "MS", red bar
   robots.txt              ← allow all (add Sitemap line once a domain + sitemap exist)
@@ -67,7 +69,7 @@ src/
   components/
     Header.astro          ← wordmark, nav (aria-current), Newsletter CTA
     Footer.astro          ← big wordmark, page/social/newsletter links, copyright
-    NewsletterSignup.astro← newsletter section + form + validation script (demo only)
+    NewsletterSignup.astro← newsletter section + form + script (POSTs to /api/subscribe)
     ProjectCard.astro     ← card with typographic placeholder visual
     SectionHeading.astro  ← eyebrow + Khand heading with optional red highlight
   pages/
@@ -85,7 +87,7 @@ Component-specific CSS lives in scoped `<style>` blocks inside each `.astro` fil
 | Owner name, wordmark, default meta description | `src/data/site.js` → `site` |
 | Nav links | `src/data/site.js` → `navLinks` |
 | Social links (`example.com` placeholders) | `src/data/site.js` → `socialLinks` |
-| Newsletter heading, copy, button label, demo message | `src/data/site.js` → `newsletter` |
+| Newsletter heading, copy, button label, success message | `src/data/site.js` → `newsletter` |
 | Projects (title, description, category, year, href, featured) | `src/data/projects.js` → `projects` |
 | Filter categories | `src/data/projects.js` → `projectCategories` |
 | Hero copy, "I'm Meenakshi." intro, highlight stats | `src/pages/index.astro` |
@@ -146,19 +148,26 @@ Rules for project data:
 
 ## Behavior that must be preserved
 
-### Newsletter form (`NewsletterSignup.astro`) is DEMO ONLY
+### Newsletter signups (`NewsletterSignup.astro` + `worker/index.js`)
 
-1. The form uses `novalidate` and `method="post"`. `method="post"` ensures the email never ends up in a URL if JavaScript fails.
-2. The script calls `event.preventDefault()`. Empty input shows "Please enter your email address." Invalid syntax shows a helpful error. In both cases the input gets `aria-invalid="true"` and receives focus.
-3. Typing clears the error.
-4. A valid submission resets the form and shows `newsletter.demoSuccessMessage`: "Thanks! The signup form is ready to connect to the newsletter service."
-5. **The email is never sent, stored or logged.** The message must not claim the visitor subscribed.
-6. Message `<p>` elements must stay truly empty in markup (`></p>` with no whitespace), because CSS hides them with `:empty`.
-7. Error and success messages use white text plus a red "!" or "✓" marker, so meaning doesn't rely on color alone.
+Frontend (`NewsletterSignup.astro`):
+1. The form has `action="/api/subscribe" method="post" novalidate`. Without JavaScript it still submits, and the Worker replies with a simple HTML page.
+2. The script checks the email first. Empty or invalid input shows an inline error and sets `aria-invalid="true"`. Typing clears the error.
+3. On a valid submit, the script `fetch`es `/api/subscribe` with `Accept: application/json`. The button shows "Sending…" and is disabled while it waits.
+4. On `{ ok: true }`, it resets the form and shows `newsletter.successMessage`. Otherwise it shows the server's `error`, or a generic message.
+5. A hidden honeypot input named `website` must stay empty, hidden off-screen, and out of the tab order.
+6. Message `<p>` elements must stay truly empty in markup (`></p>`), because CSS hides them with `:empty`.
+7. Messages use white text plus a red "!" or "✓" marker, so meaning doesn't rely on color alone.
 
-The section has `id="newsletter"`. The header CTA, hero CTA, About CTA and footer link all point to `#newsletter`, so keep exactly one `NewsletterSignup` per page. If you ever need two on one page, give them different `formId` props and rethink the anchor.
+Backend (`worker/index.js`):
+- `wrangler.jsonc` sets `run_worker_first: ["/api/*"]`, so only API calls run the Worker. Pages are served directly from assets.
+- `POST /api/subscribe` reads form data and checks the honeypot (a filled honeypot gets a fake success and nothing is saved). It validates and lowercases the email (max 254 characters), then runs `CREATE TABLE IF NOT EXISTS subscribers (email TEXT PRIMARY KEY, created_at TEXT)` followed by `INSERT … ON CONFLICT(email) DO NOTHING`.
+- Replies are JSON when `Accept: application/json`, otherwise a tiny HTML page. Other `/api/*` paths return a 404 JSON response.
+- Store **only** email and signup time. Don't log emails, and don't store IP addresses or other tracking data.
+- This only collects subscribers. Sending the newsletter happens outside this repo, in an email tool that provides unsubscribe links.
+- D1 binding: `DB`, database `vibe-coded-site-subscribers`, auto-provisioned on deploy (no `database_id` in config). If provisioning ever fails, create the database in the dashboard and add `database_id`.
 
-To connect a real provider later, follow the README section "Connecting a newsletter provider". Never put secret API keys in frontend code.
+The section has `id="newsletter"`. The header CTA, hero CTA, About CTA and footer link all point to `#newsletter`, so keep exactly one `NewsletterSignup` per page.
 
 ### Project filter (`projects.astro`)
 
@@ -206,7 +215,7 @@ To connect a real provider later, follow the README section "Connecting a newsle
 1. `npm run build` completes with no errors.
 2. No horizontal overflow at 320, 375, 768 and 1280px on all three pages. A quick check in the browser console: `document.documentElement.scrollWidth <= innerWidth`.
 3. No console errors.
-4. The newsletter form handles three cases: an empty submit shows an error, an invalid email shows an error, and a valid email shows the demo message and makes no network request.
+4. Using `npm run preview:cloudflare` (http://localhost:8787): an empty or invalid email shows an inline error. A valid email shows the success message and appears in the local D1 database (`npx wrangler d1 execute vibe-coded-site-subscribers --local --command "SELECT * FROM subscribers"`). Signing up twice doesn't duplicate the row.
 5. The project filter shows the correct projects per category.
 6. Internal links (`/`, `/about/`, `/projects/`, `#newsletter`) all resolve.
 7. No invented facts, metrics, testimonials, dates or real-looking social URLs were added.
@@ -220,12 +229,12 @@ Cloudflare **Worker with static assets**, connected to GitHub (`Meenakshi774/vib
 - Root directory: `/`
 - `wrangler.jsonc` sets `assets.directory` to `./dist`. Its `name` must match the Worker name (`vibe-coded-site`).
 - Node comes from `.node-version`. Every push to `main` redeploys.
-- No server code, bindings or environment variables.
+- Bindings: `ASSETS` (static files) and `DB` (D1). No environment variables or secrets.
 - To validate the config locally: `npm run build && npx wrangler deploy --dry-run`.
 
 ## Out of scope (for now)
 
-Blog, CMS, database, auth, backend, newsletter API, email delivery, payments, analytics, complex animation, loading screens, search, complex filtering, admin dashboard. Only add one if the owner asks.
+Blog, CMS, auth, sending emails from the site, third-party newsletter APIs, payments, analytics, complex animation, loading screens, search, complex filtering, admin dashboard. Only add one if the owner asks.
 
 ## Style for code changes
 

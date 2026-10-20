@@ -1,7 +1,7 @@
 # Meenakshi Sisodiya — personal site
 
 A small, static personal website built with [Astro](https://astro.build) and plain CSS.
-Three pages (Home, About, Projects), a frontend-only newsletter form, and no backend.
+Three pages (Home, About, Projects) and a working newsletter signup form. Signups are saved to a free Cloudflare D1 database by a tiny Worker (`worker/index.js`).
 
 ## Quick start
 
@@ -11,7 +11,8 @@ Requires Node.js 22.22 or newer (Astro 7). `.node-version` pins Node 22 for Clou
 npm install       # first time only
 npm run dev       # local dev server at http://localhost:4321
 npm run build     # production build into ./dist
-npm run preview   # serve the production build locally
+npm run preview   # serve the production build locally (no signup API)
+npm run preview:cloudflare  # build + run the site AND signup API locally (http://localhost:8787)
 ```
 
 ## Where things live
@@ -59,22 +60,30 @@ To **remove the highlights/stats section**, delete the `<!-- Highlights -->` sec
 - **Red** is reserved for CTAs, highlighted headline words and small accents. Red text is never used on black, because the contrast is too low.
 - Motion is limited to hover states and a short fade-up on page intros. All of it is disabled when the visitor prefers reduced motion.
 
-## Newsletter form (demo mode)
+## Newsletter signups (Cloudflare D1)
 
-The form in `src/components/NewsletterSignup.astro` validates the email in the browser and then shows:
+How it works:
+1. The form in `src/components/NewsletterSignup.astro` checks the email, then POSTs it to `/api/subscribe`.
+2. `worker/index.js` validates it again and saves it to the D1 database `vibe-coded-site-subscribers`, in the table `subscribers` (`email`, `created_at`). The table is created automatically on the first signup.
+3. Duplicate signups are ignored. A hidden "website" field catches simple spam bots.
 
-> Thanks! The signup form is ready to connect to the newsletter service.
+The success message is `newsletter.successMessage` in `src/data/site.js`.
 
-**Nothing is sent or stored.** The email is discarded.
+**Seeing your subscribers:** in the Cloudflare dashboard, go to **Storage & databases → D1 → vibe-coded-site-subscribers → Console**, and run:
 
-### Connecting a newsletter provider later
+```sql
+SELECT email, created_at FROM subscribers ORDER BY created_at DESC;
+```
 
-Most providers (Buttondown, ConvertKit/Kit, Beehiiv, Mailchimp, etc.) offer either:
+**Removing someone** (e.g. an unsubscribe request):
 
-1. **An HTML form endpoint.** Set the `<form>`'s `action` to the provider's URL. Make sure the input `name` matches what the provider expects. Then remove `event.preventDefault()` from the success path of the script. Or
-2. **An embed or API call.** Replace the `DEMO ONLY` block in the script with a `fetch()` to the provider's public subscribe endpoint.
+```sql
+DELETE FROM subscribers WHERE email = 'person@example.com';
+```
 
-Then update `demoSuccessMessage` in `src/data/site.js` to a real confirmation, such as "Check your inbox to confirm." Never put a secret API key in frontend code.
+**Sending the newsletter:** this setup only *collects* emails. To send, copy the list into an email tool (Kit, Buttondown, MailerLite, etc.). Every email you send must include an unsubscribe link, and those tools add one for you.
+
+`/api/subscribe` doesn't exist under `npm run dev`, so the form shows an error there. Use `npm run preview:cloudflare` to test signups locally. That uses a local test database, not the real one.
 
 ## SEO
 
@@ -87,7 +96,9 @@ When you have a real domain:
 
 ## Deploying to Cloudflare (free tier)
 
-The site deploys as a Cloudflare **Worker with static assets**. `wrangler.jsonc` tells Cloudflare to serve the `dist` folder. There's no server code, and it fits within the free plan.
+The site deploys as a Cloudflare **Worker with static assets**. `wrangler.jsonc` tells Cloudflare to serve the `dist` folder, run `worker/index.js` for `/api/*` requests, and connect the D1 database (as `DB`). It fits within the free plan.
+
+The D1 database is created automatically on the first deploy. If a deploy ever fails because of it, create a D1 database named `vibe-coded-site-subscribers` in the dashboard. Then add its ID as `"database_id"` in `wrangler.jsonc`.
 
 Cloudflare project settings (**Settings → Build**):
 

@@ -1,7 +1,9 @@
 ---
-// Newsletter signup — FRONTEND ONLY (demo).
-// The email is validated in the browser and then discarded. Nothing is sent,
-// stored, or uploaded. See "Connecting a newsletter provider" in README.md.
+// Newsletter signup form.
+// The email is checked in the browser, then POSTed to /api/subscribe, which is
+// handled by the Cloudflare Worker in worker/index.js and saved to a D1 database.
+// Note: /api/subscribe only exists on Cloudflare (or `npm run preview:cloudflare`),
+// not under `npm run dev`.
 import { newsletter } from '../data/site.js';
 
 interface Props {
@@ -28,7 +30,7 @@ const statusId = `${formId}-status`;
         <p class="lead">{newsletter.description}</p>
       </div>
 
-      <form class="form" method="post" novalidate data-newsletter-form>
+      <form class="form" action="/api/subscribe" method="post" novalidate data-newsletter-form>
         <label class="label" for={inputId}>Email address</label>
         <div class="field-row">
           <input
@@ -47,15 +49,21 @@ const statusId = `${formId}-status`;
           </button>
         </div>
 
+        <!-- Honeypot: hidden from people, often filled in by spam bots. Leave it empty. -->
+        <div class="honeypot" aria-hidden="true">
+          <label for={`${formId}-website`}>Website</label>
+          <input id={`${formId}-website`} type="text" name="website" tabindex="-1" autocomplete="off" />
+        </div>
+
         <!-- Validation error (announced via aria-describedby + aria-invalid) -->
         <p class="message message--error" id={errorId} data-error></p>
-        <!-- Demo confirmation (announced politely by screen readers) -->
+        <!-- Confirmation (announced politely by screen readers) -->
         <p
           class="message message--success"
           id={statusId}
           role="status"
           data-status
-          data-success-message={newsletter.demoSuccessMessage}
+          data-success-message={newsletter.successMessage}
         ></p>
       </form>
     </div>
@@ -85,7 +93,10 @@ const statusId = `${formId}-status`;
 
     input.addEventListener('input', clearError);
 
-    form.addEventListener('submit', (event) => {
+    const button = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+    const buttonLabel = button.textContent;
+
+    form.addEventListener('submit', async (event) => {
       event.preventDefault();
       const email = input.value.trim();
 
@@ -99,15 +110,30 @@ const statusId = `${formId}-status`;
       }
 
       clearError();
+      status.textContent = '';
+      button.disabled = true;
+      button.textContent = 'Sending…';
 
-      // ------------------------------------------------------------------
-      // DEMO ONLY: the email is NOT sent or stored anywhere.
-      // To connect a real provider, either set the form's `action` to the
-      // provider's form URL and remove `event.preventDefault()`, or send
-      // `email` to the provider here with fetch(). See README.md.
-      // ------------------------------------------------------------------
-      form.reset();
-      status.textContent = status.dataset.successMessage ?? '';
+      try {
+        const response = await fetch(form.action, {
+          method: 'POST',
+          body: new FormData(form),
+          headers: { Accept: 'application/json' },
+        });
+        const result = await response.json().catch(() => ({ ok: false }));
+
+        if (response.ok && result.ok) {
+          form.reset();
+          status.textContent = status.dataset.successMessage ?? '';
+        } else {
+          showError(result.error ?? 'Something went wrong. Please try again in a moment.');
+        }
+      } catch {
+        showError('Couldn’t reach the server. Check your connection and try again.');
+      } finally {
+        button.disabled = false;
+        button.textContent = buttonLabel;
+      }
     });
   });
 </script>
@@ -190,6 +216,20 @@ const statusId = `${formId}-status`;
 
   .submit {
     flex: 0 0 auto;
+  }
+
+  .submit:disabled {
+    cursor: progress;
+    opacity: 0.7;
+  }
+
+  /* Off-screen so people never see it; bots filling every field trip it */
+  .honeypot {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
   }
 
   /* Red outline would vanish against a red button on black — use white */
