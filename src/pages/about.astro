@@ -1,0 +1,257 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import NewsletterSignup from '../components/NewsletterSignup.astro';
+
+// PLACEHOLDER timeline — replace years, titles and descriptions with real ones.
+const milestones = [
+  { year: '20XX', title: 'Placeholder milestone', description: 'Where it started — a first job, project or turning point.' },
+  { year: '20XX', title: 'Placeholder milestone', description: 'Something built, launched or learned that shaped what came next.' },
+  { year: '20XX', title: 'Placeholder milestone', description: 'A bigger step: a business, a body of work, or a change of direction.' },
+  { year: 'Today', title: 'Placeholder milestone', description: 'What I’m focused on right now, and what I’m writing about each week.' },
+];
+
+// PLACEHOLDER values / principles.
+const values = [
+  { title: 'Ship it', description: 'Placeholder principle — a sentence on why finishing beats polishing.' },
+  { title: 'Learn in public', description: 'Placeholder principle — a sentence on sharing the process, not just the result.' },
+  { title: 'Stay curious', description: 'Placeholder principle — a sentence on following interesting questions.' },
+  { title: 'Keep it simple', description: 'Placeholder principle — a sentence on doing fewer things, better.' },
+];
+---
+
+<BaseLayout
+  title="About"
+  description="A little about Meenakshi Sisodiya — the person behind the projects, ideas and weekly emails."
+>
+  <!-- Page intro -->
+  <section class="page-intro">
+    <div class="container">
+      <p class="eyebrow rise">About</p>
+      <h1 class="page-title rise rise-delay-1">A little <span class="highlight">about me.</span></h1>
+      <p class="lead rise rise-delay-2">The person behind the projects, ideas, and weekly emails.</p>
+    </div>
+  </section>
+
+  <!-- Story -->
+  <section class="section" aria-labelledby="story-heading">
+    <div class="container story-grid">
+      <h2 id="story-heading" class="story-title">The <span class="highlight">story</span> so far</h2>
+      <div class="story-copy">
+        <p class="lead">
+          [Placeholder] Who I am in one or two sentences — the short version you'd give someone at a
+          dinner party.
+        </p>
+        <p>
+          [Placeholder] My background: where I started, what I studied or did first, and the path
+          that led me here. Keep it short and specific rather than a full CV.
+        </p>
+        <p>
+          [Placeholder] What I do now: the work, businesses or projects that take up most of my
+          time, and who they're for.
+        </p>
+        <p>
+          [Placeholder] Why I build and write: what keeps me making things, what I'm curious about,
+          and why I share it every week.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Timeline -->
+  <section class="section" aria-labelledby="timeline-heading">
+    <div class="container">
+      <SectionHeading id="timeline-heading" eyebrow="Background" title="How I" highlight="got here." />
+      <ol class="timeline" role="list">
+        {
+          milestones.map((item) => (
+            <li class="milestone">
+              <span class="milestone-year">{item.year}</span>
+              <div>
+                <h3 class="milestone-title">{item.title}</h3>
+                <p class="muted">{item.description}</p>
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+
+  <!-- Values -->
+  <section class="section" aria-labelledby="values-heading">
+    <div class="container">
+      <SectionHeading id="values-heading" eyebrow="What I care about" title="Things I" highlight="believe." />
+      <ul class="values" role="list">
+        {
+          values.map((value, index) => (
+            <li class="value">
+              <span class="value-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+              <h3 class="value-title">{value.title}</h3>
+              <p class="muted">{value.description}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <!-- Closing CTA -->
+  <section class="section" aria-labelledby="next-heading">
+    <div class="container closing">
+      <h2 id="next-heading" class="closing-title">See what I've <span class="highlight">built.</span></h2>
+      <div class="closing-actions">
+        <a class="button" href="/projects/">Explore my projects</a>
+        <a class="button button--accent" href="#newsletter">Get the weekly newsletter</a>
+      </div>
+    </div>
+  </section>
+
+  <NewsletterSignup />
+</BaseLayout>
+
+<style>
+  .page-intro {
+    padding-block: clamp(3.5rem, 9vw, 7rem) var(--section-space);
+    border-bottom: 1px solid var(--color-black);
+  }
+
+  .page-title {
+    margin-block: var(--space-4) var(--space-5);
+    font-size: var(--display-xl);
+    line-height: 0.86;
+  }
+
+  /* --- Story --- */
+  .story-grid {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .story-title {
+    font-size: var(--display-md);
+  }
+
+  .story-copy {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  @media (min-width: 60rem) {
+    .story-grid {
+      grid-template-columns: 1fr 1.6fr;
+    }
+
+    .story-title {
+      position: sticky;
+      top: var(--space-5);
+      align-self: start;
+    }
+  }
+
+  /* --- Timeline --- */
+  .timeline {
+    border-left: 2px solid var(--color-black);
+    max-width: 52rem;
+  }
+
+  .milestone {
+    position: relative;
+    display: grid;
+    gap: var(--space-2) var(--space-5);
+    padding: 0 0 var(--space-6) var(--space-5);
+  }
+
+  .milestone:last-child {
+    padding-bottom: 0;
+  }
+
+  /* Square marker on the line */
+  .milestone::before {
+    content: '';
+    position: absolute;
+    left: -7px;
+    top: 0.35em;
+    width: 12px;
+    height: 12px;
+    background: var(--color-black);
+  }
+
+  .milestone:last-child::before {
+    background: var(--color-red);
+  }
+
+  .milestone-year {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--display-sm);
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  .milestone-title {
+    margin-bottom: var(--space-2);
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: var(--text-lg);
+    letter-spacing: 0.04em;
+  }
+
+  @media (min-width: 48rem) {
+    .milestone {
+      grid-template-columns: 8rem 1fr;
+    }
+  }
+
+  /* --- Values --- */
+  .values {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+    gap: var(--space-5);
+  }
+
+  .value {
+    display: grid;
+    align-content: start;
+    gap: var(--space-2);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-black);
+  }
+
+  .value-number {
+    font-size: var(--text-sm);
+    letter-spacing: 0.14em;
+    color: var(--color-red);
+  }
+
+  .value-title {
+    font-size: var(--display-sm);
+  }
+
+  /* --- Closing CTA --- */
+  .closing {
+    display: grid;
+    gap: var(--space-5);
+    justify-items: start;
+  }
+
+  .closing-title {
+    font-size: var(--display-lg);
+  }
+
+  .closing-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  @media (max-width: 30rem) {
+    .closing-actions {
+      width: 100%;
+    }
+
+    .closing-actions .button {
+      flex: 1 1 100%;
+    }
+  }
+</style>

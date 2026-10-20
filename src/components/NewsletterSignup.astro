@@ -1,0 +1,244 @@
+---
+// Newsletter signup — FRONTEND ONLY (demo).
+// The email is validated in the browser and then discarded. Nothing is sent,
+// stored, or uploaded. See "Connecting a newsletter provider" in README.md.
+import { newsletter } from '../data/site.js';
+
+interface Props {
+  /** Unique id prefix if you ever place more than one form on a page. */
+  formId?: string;
+}
+
+const { formId = 'newsletter' } = Astro.props;
+const headingId = `${formId}-heading`;
+const inputId = `${formId}-email`;
+const errorId = `${formId}-error`;
+const statusId = `${formId}-status`;
+---
+
+<section class="section newsletter" id="newsletter" aria-labelledby={headingId}>
+  <div class="container">
+    <div class="panel">
+      <div class="panel-copy">
+        <p class="eyebrow">The weekly newsletter</p>
+        <h2 id={headingId}>
+          {newsletter.heading}{' '}
+          <span class="highlight">{newsletter.headingHighlight}</span>
+        </h2>
+        <p class="lead">{newsletter.description}</p>
+      </div>
+
+      <form class="form" method="post" novalidate data-newsletter-form>
+        <label class="label" for={inputId}>Email address</label>
+        <div class="field-row">
+          <input
+            class="input"
+            id={inputId}
+            type="email"
+            name="email"
+            autocomplete="email"
+            inputmode="email"
+            placeholder="you@example.com"
+            required
+            aria-describedby={errorId}
+          />
+          <button class="button button--accent submit" type="submit">
+            {newsletter.buttonLabel}
+          </button>
+        </div>
+
+        <!-- Validation error (announced via aria-describedby + aria-invalid) -->
+        <p class="message message--error" id={errorId} data-error></p>
+        <!-- Demo confirmation (announced politely by screen readers) -->
+        <p
+          class="message message--success"
+          id={statusId}
+          role="status"
+          data-status
+          data-success-message={newsletter.demoSuccessMessage}
+        ></p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Basic email syntax check: something@something.something, no spaces.
+  const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  document.querySelectorAll<HTMLFormElement>('[data-newsletter-form]').forEach((form) => {
+    const input = form.querySelector<HTMLInputElement>('input[type="email"]')!;
+    const error = form.querySelector<HTMLElement>('[data-error]')!;
+    const status = form.querySelector<HTMLElement>('[data-status]')!;
+
+    const showError = (message: string) => {
+      error.textContent = message;
+      input.setAttribute('aria-invalid', 'true');
+      status.textContent = '';
+      input.focus();
+    };
+
+    const clearError = () => {
+      error.textContent = '';
+      input.removeAttribute('aria-invalid');
+    };
+
+    input.addEventListener('input', clearError);
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const email = input.value.trim();
+
+      if (!email) {
+        showError('Please enter your email address.');
+        return;
+      }
+      if (!EMAIL_PATTERN.test(email)) {
+        showError('That doesn’t look like a valid email. Try something like name@example.com.');
+        return;
+      }
+
+      clearError();
+
+      // ------------------------------------------------------------------
+      // DEMO ONLY: the email is NOT sent or stored anywhere.
+      // To connect a real provider, either set the form's `action` to the
+      // provider's form URL and remove `event.preventDefault()`, or send
+      // `email` to the provider here with fetch(). See README.md.
+      // ------------------------------------------------------------------
+      form.reset();
+      status.textContent = status.dataset.successMessage ?? '';
+    });
+  });
+</script>
+
+<style>
+  .panel {
+    display: grid;
+    gap: var(--space-6);
+    padding: clamp(2rem, 6vw, 5rem);
+    background: var(--color-black);
+    color: var(--color-white);
+  }
+
+  @media (min-width: 60rem) {
+    .panel {
+      grid-template-columns: 1.1fr 1fr;
+      align-items: end;
+    }
+  }
+
+  .panel-copy {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .panel-copy .eyebrow,
+  .panel-copy .lead {
+    color: var(--color-muted-inverse);
+  }
+
+  h2 {
+    font-size: var(--display-lg);
+  }
+
+  h2 .highlight {
+    display: block;
+  }
+
+  .form {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .label {
+    font-size: var(--text-sm);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .field-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .input {
+    flex: 1 1 14rem;
+    min-width: 0;
+    min-height: 3.25rem;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--color-white);
+    border-radius: 0;
+    background: var(--color-white);
+    color: var(--color-black);
+  }
+
+  .input::placeholder {
+    color: rgb(0 0 0 / 0.5);
+  }
+
+  .input:focus-visible {
+    outline: 3px solid var(--color-red);
+    outline-offset: 2px;
+  }
+
+  .input[aria-invalid='true'] {
+    border-color: var(--color-red);
+    box-shadow: inset 0 0 0 2px var(--color-red);
+  }
+
+  .submit {
+    flex: 0 0 auto;
+  }
+
+  /* Red outline would vanish against a red button on black — use white */
+  .submit:focus-visible {
+    outline-color: var(--color-white);
+  }
+
+  .submit:hover {
+    background: var(--color-white);
+    border-color: var(--color-white);
+    color: var(--color-black);
+  }
+
+  @media (max-width: 30rem) {
+    .submit {
+      flex-basis: 100%;
+    }
+  }
+
+  /* Messages use white text plus a marker, so meaning never relies on color alone */
+  .message {
+    display: flex;
+    gap: var(--space-2);
+    align-items: baseline;
+    font-size: var(--text-sm);
+  }
+
+  /* Messages stay hidden until the script fills them */
+  .message:empty {
+    display: none;
+  }
+
+  .message--error::before,
+  .message--success::before {
+    flex: none;
+    display: inline-grid;
+    place-items: center;
+    width: 1.4em;
+    height: 1.4em;
+    font-weight: 700;
+    background: var(--color-red);
+    color: var(--color-white);
+  }
+
+  .message--error::before {
+    content: '!';
+  }
+
+  .message--success::before {
+    content: '✓';
+  }
+</style>

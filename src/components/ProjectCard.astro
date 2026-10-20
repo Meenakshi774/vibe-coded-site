@@ -1,0 +1,179 @@
+---
+// One project card. The whole card is clickable (via the title link's
+// ::after overlay) while keeping a single, clearly-named link for screen readers.
+interface Props {
+  project: {
+    title: string;
+    description: string;
+    category: string;
+    year?: string;
+    href: string;
+  };
+  index: number;
+}
+
+const { project, index } = Astro.props;
+const number = String(index + 1).padStart(2, '0');
+
+// Typographic placeholder visuals rotate through three treatments.
+const variants = ['black', 'outline', 'red'];
+const variant = variants[index % variants.length];
+---
+
+<article class="card">
+  <div class:list={['card-visual', `card-visual--${variant}`]} aria-hidden="true">
+    <span class="card-number">{number}</span>
+    <span class="card-visual-label">{project.category}</span>
+  </div>
+
+  <div class="card-body">
+    <p class="card-meta">
+      <span>{project.category}</span>
+      {project.year && <span>{project.year}</span>}
+    </p>
+    <h3 class="card-title">
+      <a href={project.href}>{project.title}</a>
+    </h3>
+    <p class="card-description">{project.description}</p>
+    <span class="card-cta" aria-hidden="true">View project <span class="arrow">→</span></span>
+  </div>
+</article>
+
+<style>
+  .card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  /* --- Placeholder visual --- */
+  .card-visual {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    aspect-ratio: 4 / 3;
+    padding: var(--space-4);
+    overflow: hidden;
+    border: 2px solid var(--color-black);
+  }
+
+  .card-visual--black {
+    background: var(--color-black);
+    color: var(--color-white);
+  }
+
+  .card-visual--outline {
+    background: var(--color-white);
+    color: var(--color-black);
+  }
+
+  .card-visual--red {
+    background: var(--color-red);
+    border-color: var(--color-red);
+    color: var(--color-white);
+  }
+
+  .card-number {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(5rem, 12vw, 8.5rem);
+    line-height: 0.8;
+    transition: transform 300ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  .card-visual-label {
+    align-self: flex-end;
+    font-size: var(--text-sm);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .card-visual--black .card-visual-label::before {
+    content: '';
+    display: inline-block;
+    width: 0.6em;
+    height: 0.6em;
+    margin-right: 0.5em;
+    background: var(--color-red);
+  }
+
+  /* --- Text --- */
+  .card-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    flex: 1;
+  }
+
+  .card-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--color-black);
+    font-size: var(--text-sm);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  .card-title {
+    font-size: var(--display-sm);
+    margin-top: var(--space-2);
+  }
+
+  .card-title a {
+    text-decoration: none;
+    transition: color var(--transition);
+  }
+
+  /* Stretch the title link over the whole card */
+  .card-title a::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  .card-description {
+    color: var(--color-muted);
+  }
+
+  .card-cta {
+    margin-top: auto;
+    padding-top: var(--space-2);
+    font-size: var(--text-sm);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .arrow {
+    display: inline-block;
+    transition: transform var(--transition);
+  }
+
+  /* --- Hover / focus --- */
+  .card:hover .card-title a,
+  .card:focus-within .card-title a {
+    color: var(--color-red);
+  }
+
+  .card:hover .card-number {
+    transform: translateY(-6px);
+  }
+
+  .card:hover .arrow {
+    transform: translateX(4px);
+  }
+
+  /* Move the focus ring from the tiny title onto the whole card */
+  .card-title a:focus-visible {
+    outline: none;
+  }
+
+  .card-title a:focus-visible::after {
+    outline: 3px solid var(--color-red);
+    outline-offset: 6px;
+  }
+</style>

@@ -1,0 +1,139 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+import NewsletterSignup from '../components/NewsletterSignup.astro';
+import { projects, projectCategories } from '../data/projects.js';
+---
+
+<BaseLayout
+  title="Projects"
+  description="Projects, experiments, ideas and other things Meenakshi Sisodiya has put into the world."
+>
+  <section class="page-intro">
+    <div class="container">
+      <p class="eyebrow rise">Projects</p>
+      <h1 class="page-title rise rise-delay-1">Things I've <span class="highlight">built.</span></h1>
+      <p class="lead rise rise-delay-2">
+        Projects, experiments, ideas, and other things I've put into the world.
+      </p>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="all-projects-heading">
+    <div class="container">
+      <h2 id="all-projects-heading" class="visually-hidden">All projects</h2>
+
+      <!-- Filter buttons stay hidden until the script below runs, so they are never dead controls. -->
+      <div class="filters" role="group" aria-label="Filter projects by category" data-filters hidden>
+        <button class="filter" type="button" data-filter="All" aria-pressed="true">All</button>
+        {
+          projectCategories.map((category) => (
+            <button class="filter" type="button" data-filter={category} aria-pressed="false">
+              {category}
+            </button>
+          ))
+        }
+      </div>
+      <p class="visually-hidden" role="status" data-filter-status></p>
+
+      <ul class="project-grid" role="list">
+        {
+          projects.map((project, index) => (
+            <li data-category={project.category}>
+              <ProjectCard project={project} index={index} />
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <NewsletterSignup />
+</BaseLayout>
+
+<script>
+  // Simple category filter: shows only cards whose data-category matches.
+  const filterGroup = document.querySelector<HTMLElement>('[data-filters]');
+  const status = document.querySelector<HTMLElement>('[data-filter-status]');
+  const items = document.querySelectorAll<HTMLElement>('.project-grid > li');
+
+  if (filterGroup && status) {
+    filterGroup.hidden = false;
+    const buttons = filterGroup.querySelectorAll<HTMLButtonElement>('[data-filter]');
+
+    buttons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const selected = button.dataset.filter;
+        let visibleCount = 0;
+
+        buttons.forEach((b) => b.setAttribute('aria-pressed', String(b === button)));
+        items.forEach((item) => {
+          const show = selected === 'All' || item.dataset.category === selected;
+          item.hidden = !show;
+          if (show) visibleCount++;
+        });
+
+        status.textContent = `Showing ${visibleCount} project${visibleCount === 1 ? '' : 's'}.`;
+      });
+    });
+  }
+</script>
+
+<style>
+  .page-intro {
+    padding-block: clamp(3.5rem, 9vw, 7rem) var(--section-space);
+    border-bottom: 1px solid var(--color-black);
+  }
+
+  .page-title {
+    margin-block: var(--space-4) var(--space-5);
+    font-size: var(--display-xl);
+    line-height: 0.86;
+  }
+
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-6);
+  }
+
+  .filters[hidden] {
+    display: none;
+  }
+
+  .filter {
+    min-height: 44px;
+    padding: 0.5rem 1.125rem;
+    border: 2px solid var(--color-black);
+    background: var(--color-white);
+    color: var(--color-black);
+    font-size: var(--text-sm);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background-color var(--transition), color var(--transition);
+  }
+
+  .filter:hover {
+    background: var(--color-black);
+    color: var(--color-white);
+  }
+
+  /* Selected state: filled black + red underline bar, not color alone */
+  .filter[aria-pressed='true'] {
+    background: var(--color-black);
+    color: var(--color-white);
+    box-shadow: inset 0 -4px 0 var(--color-red);
+  }
+
+  .project-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+    gap: var(--space-7) var(--space-5);
+  }
+
+  .project-grid > li[hidden] {
+    display: none;
+  }
+</style>

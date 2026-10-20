@@ -1,0 +1,97 @@
+---
+import { site, navLinks, socialLinks } from '../data/site.js';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="container">
+    <p class="footer-wordmark" aria-hidden="true">
+      {site.wordmark}<span class="highlight">.</span>
+    </p>
+
+    <div class="footer-grid">
+      <nav aria-label="Footer">
+        <h2 class="footer-label">Pages</h2>
+        <ul role="list">
+          {navLinks.map((link) => <li><a href={link.href}>{link.label}</a></li>)}
+        </ul>
+      </nav>
+
+      <div>
+        <h2 class="footer-label">Elsewhere</h2>
+        <ul role="list">
+          {socialLinks.map((link) => <li><a href={link.href}>{link.label}</a></li>)}
+        </ul>
+      </div>
+
+      <div>
+        <h2 class="footer-label">Newsletter</h2>
+        <ul role="list">
+          <li><a href="#newsletter">Get the weekly email</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <p class="copyright">© {year} {site.name}. All rights reserved.</p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: var(--color-black);
+    color: var(--color-white);
+    padding-block: var(--space-7) var(--space-5);
+  }
+
+  .footer-wordmark {
+    max-width: none;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(3rem, 12vw, 11rem);
+    line-height: 0.85;
+    padding-bottom: var(--space-5);
+    border-bottom: 1px solid rgb(255 255 255 / 0.3);
+  }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: var(--space-5);
+    padding-block: var(--space-5);
+  }
+
+  .footer-label {
+    margin-bottom: var(--space-3);
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: var(--text-sm);
+    line-height: 1.4;
+    letter-spacing: 0.14em;
+    color: var(--color-muted-inverse);
+  }
+
+  ul a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    text-decoration: none;
+    transition: color var(--transition);
+  }
+
+  /* Red-on-black text is low contrast, so hover uses a red underline instead */
+  ul a:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--color-red);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.3em;
+  }
+
+  .copyright {
+    max-width: none;
+    padding-top: var(--space-4);
+    border-top: 1px solid rgb(255 255 255 / 0.3);
+    font-size: var(--text-sm);
+    color: var(--color-muted-inverse);
+  }
+</style>

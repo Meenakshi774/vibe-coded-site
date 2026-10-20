@@ -1,0 +1,137 @@
+---
+import { site, navLinks } from '../data/site.js';
+
+// Normalise "/about" and "/about/" so the current page is highlighted either way.
+const normalise = (path: string) => (path.endsWith('/') ? path : `${path}/`);
+const currentPath = normalise(Astro.url.pathname);
+---
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="wordmark" href="/" aria-label={`${site.name} — home`}>
+      {site.wordmark}<span class="dot" aria-hidden="true">.</span>
+    </a>
+
+    <nav aria-label="Main">
+      <ul class="nav-list" role="list">
+        {
+          navLinks.map((link) => (
+            <li>
+              <a
+                class="nav-link"
+                href={link.href}
+                aria-current={normalise(link.href) === currentPath ? 'page' : undefined}
+              >
+                {link.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <a class="button button--accent nav-cta" href="#newsletter">Newsletter</a>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    border-bottom: 1px solid var(--color-black);
+  }
+
+  .header-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-5);
+    padding-block: var(--space-3);
+  }
+
+  .wordmark {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+    line-height: 1;
+    letter-spacing: 0.01em;
+    text-decoration: none;
+    padding-top: 0.15em; /* optical alignment for Khand */
+  }
+
+  .dot {
+    color: var(--color-red);
+  }
+
+  .nav-list {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1) var(--space-4);
+  }
+
+  .nav-link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    font-size: var(--text-sm);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: color var(--transition);
+  }
+
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 8px;
+    height: 2px;
+    background: var(--color-red);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--transition);
+  }
+
+  .nav-link:hover::after,
+  .nav-link[aria-current='page']::after {
+    transform: scaleX(1);
+  }
+
+  .nav-link:hover {
+    color: var(--color-red);
+  }
+
+  .nav-cta {
+    min-height: 2.75rem;
+    padding: 0.5rem 1rem;
+  }
+
+  @media (min-width: 40.0625rem) {
+    nav {
+      margin-left: auto;
+    }
+  }
+
+  /* Small screens: wordmark + newsletter button on top, page links on a row below */
+  @media (max-width: 40rem) {
+    .header-inner {
+      gap: var(--space-2) var(--space-3);
+      padding-block: var(--space-3) var(--space-1);
+    }
+
+    .nav-cta {
+      padding-inline: 0.75rem;
+      letter-spacing: 0.08em;
+    }
+
+    nav {
+      order: 3;
+      width: 100%;
+    }
+
+    .nav-list {
+      gap: var(--space-5);
+    }
+  }
+</style>

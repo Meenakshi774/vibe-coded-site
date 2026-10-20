@@ -1,0 +1,225 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+import NewsletterSignup from '../components/NewsletterSignup.astro';
+import { projects } from '../data/projects.js';
+
+const featuredProjects = projects.filter((project) => project.featured).slice(0, 3);
+
+// PLACEHOLDER highlights — replace with real numbers, or delete the
+// "Highlights" section below if you'd rather not show stats.
+const highlights = [
+  { value: 'XX+', label: 'Projects and experiments completed' },
+  { value: 'XX years', label: 'Building and creating things' },
+  { value: 'XX', label: 'Placeholder audience or community metric' },
+];
+---
+
+<BaseLayout
+  title="Creator, builder, entrepreneur"
+  description="Meenakshi Sisodiya makes things happen, then writes about it. Explore the projects and get the weekly newsletter."
+>
+  <!-- Hero -->
+  <section class="hero" aria-labelledby="hero-heading">
+    <div class="container">
+      <p class="eyebrow rise">Creator · Builder · Entrepreneur</p>
+      <h1 id="hero-heading" class="hero-title rise rise-delay-1">
+        <span class="line">I make things happen.</span>{' '}
+        <span class="line highlight">Then I write about it.</span>
+      </h1>
+      <div class="hero-footer rise rise-delay-2">
+        <p class="lead">
+          A short introduction to who I am, what I've built, and what I've learned along the way.
+        </p>
+        <div class="hero-actions">
+          <a class="button button--accent" href="#newsletter">Get the weekly newsletter</a>
+          <a class="button button--outline" href="/projects/">Explore my projects</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Introduction -->
+  <section class="section intro" aria-labelledby="intro-heading">
+    <div class="container intro-grid">
+      <div>
+        <p class="eyebrow">Hello</p>
+        <h2 id="intro-heading" class="intro-title">I'm <span class="highlight">Meenakshi.</span></h2>
+      </div>
+      <div class="intro-copy">
+        <p class="lead">
+          I'm Meenakshi — a [placeholder description of who I am]. I enjoy [placeholder interests],
+          building [placeholder projects], and sharing what I learn along the way.
+        </p>
+        <a class="arrow-link" href="/about/">More about me <span aria-hidden="true">→</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Selected projects -->
+  <section class="section" aria-labelledby="work-heading">
+    <div class="container">
+      <div class="work-header">
+        <SectionHeading id="work-heading" eyebrow="Selected work" title="Things I've" highlight="made." />
+        <a class="arrow-link" href="/projects/">View all projects <span aria-hidden="true">→</span></a>
+      </div>
+      <ul class="project-grid" role="list">
+        {
+          featuredProjects.map((project, index) => (
+            <li>
+              <ProjectCard project={project} index={index} />
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <!-- Highlights (placeholder) -->
+  <section class="section" aria-labelledby="highlights-heading">
+    <div class="container">
+      <h2 id="highlights-heading" class="visually-hidden">Highlights</h2>
+      <ul class="highlights" role="list">
+        {
+          highlights.map((item) => (
+            <li class="highlight-item">
+              <span class="highlight-value">{item.value}</span>
+              <span class="highlight-label">{item.label}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <NewsletterSignup />
+</BaseLayout>
+
+<style>
+  /* --- Hero --- */
+  .hero {
+    padding-block: clamp(3.5rem, 9vw, 7.5rem) var(--section-space);
+    border-bottom: 1px solid var(--color-black);
+  }
+
+  .hero .eyebrow {
+    margin-bottom: var(--space-4);
+  }
+
+  .hero-title {
+    font-size: var(--display-xl);
+    line-height: 0.86;
+  }
+
+  .line {
+    display: block;
+  }
+
+  .hero-footer {
+    display: grid;
+    gap: var(--space-5);
+    margin-top: clamp(2.5rem, 6vw, 4.5rem);
+    padding-top: var(--space-5);
+    border-top: 4px solid var(--color-black);
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  @media (min-width: 60rem) {
+    .hero-footer {
+      grid-template-columns: 1fr auto;
+      align-items: end;
+    }
+  }
+
+  @media (max-width: 30rem) {
+    .hero-actions .button {
+      flex: 1 1 100%;
+    }
+  }
+
+  /* --- Intro --- */
+  .intro-grid {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .intro-title {
+    margin-top: var(--space-3);
+    font-size: var(--display-lg);
+  }
+
+  .intro-copy {
+    display: grid;
+    gap: var(--space-5);
+    justify-items: start;
+  }
+
+  @media (min-width: 60rem) {
+    .intro-grid {
+      grid-template-columns: 1fr 1.2fr;
+      align-items: end;
+    }
+  }
+
+  /* --- Selected projects --- */
+  .work-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: var(--space-3);
+    margin-bottom: var(--space-6);
+  }
+
+  .work-header :global(.section-heading) {
+    margin-bottom: 0;
+  }
+
+  .project-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+    gap: var(--space-6) var(--space-5);
+  }
+
+  /* --- Highlights --- */
+  .highlights {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  }
+
+  .highlight-item {
+    display: grid;
+    gap: var(--space-2);
+    padding: var(--space-5) var(--space-4) var(--space-5) 0;
+    border-top: 4px solid var(--color-black);
+  }
+
+  .highlight-item:first-child {
+    border-top-color: var(--color-red);
+  }
+
+  .highlight-value {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--display-lg);
+    line-height: 0.9;
+    text-transform: uppercase;
+  }
+
+  .highlight-label {
+    max-width: 16rem;
+    color: var(--color-muted);
+  }
+
+  @media (min-width: 48rem) {
+    .highlights {
+      gap: var(--space-5);
+    }
+  }
+</style>
